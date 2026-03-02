@@ -5,11 +5,5 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class CurrencyPriceDTO {
+public record CurrencyPriceDTO(USDBRL USDBRL) {}
 
-    public USDBRL USDBRL;
-
-}

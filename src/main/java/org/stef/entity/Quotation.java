@@ -11,7 +11,7 @@ import java.util.Date;
 @Table(name="quotation")
 @Data
 @NoArgsConstructor
-public class QuotationEntity {
+public class Quotation {
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)

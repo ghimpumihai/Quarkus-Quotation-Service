@@ -7,7 +7,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.stef.client.CurrencyPriceClient;
 import org.stef.dto.CurrencyPriceDTO;
 import org.stef.dto.QuotationDTO;
-import org.stef.entity.QuotationEntity;
+import org.stef.entity.Quotation;
 import org.stef.message.KafkaEvents;
 import org.stef.repository.QuotationRepository;
 
@@ -33,22 +33,22 @@ public class QuotationService {
         if(updateCurrentInfoPrice(currencyPriceInfo)){
             kafkaEvents.sendNewKafkaEvent(QuotationDTO
                     .builder()
-                    .currencyPrice(new BigDecimal(currencyPriceInfo.getUSDBRL().bid()))
+                    .currencyPrice(new BigDecimal(currencyPriceInfo.USDBRL().bid()))
                     .date(new Date())
                     .build());
         }
     }
 
     private boolean updateCurrentInfoPrice(CurrencyPriceDTO currencyPriceInfo){
-        BigDecimal currentPrice = new BigDecimal(currencyPriceInfo.getUSDBRL().bid());
+        BigDecimal currentPrice = new BigDecimal(currencyPriceInfo.USDBRL().bid());
         boolean updatedPrice = false;
-        List<QuotationEntity> quotationList = quotationRepository.findAll().list();
+        List<Quotation> quotationList = quotationRepository.findAll().list();
         if(quotationList.isEmpty()){
             saveQuotation(currencyPriceInfo);
             updatedPrice = true;
         }
         else{
-            QuotationEntity lastDollarPrice = quotationList.getLast();
+            Quotation lastDollarPrice = quotationList.getLast();
 
             if(currentPrice.floatValue() > lastDollarPrice.getCurrencyPrice().floatValue()){
                 saveQuotation(currencyPriceInfo);
@@ -59,11 +59,11 @@ public class QuotationService {
     }
 
     private void saveQuotation(CurrencyPriceDTO currencyDTO){
-        QuotationEntity quotation = new QuotationEntity();
+        Quotation quotation = new Quotation();
 
         quotation.setDate(new Date());
-        quotation.setCurrencyPrice(new BigDecimal(currencyDTO.getUSDBRL().bid()));
-        quotation.setPctChange(currencyDTO.getUSDBRL().pctChange());
+        quotation.setCurrencyPrice(new BigDecimal(currencyDTO.USDBRL().bid()));
+        quotation.setPctChange(currencyDTO.USDBRL().pctChange());
         quotation.setPair("USD-BRL");
 
         quotationRepository.persist(quotation);
