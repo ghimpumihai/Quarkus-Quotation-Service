@@ -1,82 +1,278 @@
-# Quarkus Quotation Service
+# 💱 Quarkus Quotation Service
 
-This repository contains a small Quarkus-based service that fetches USD-BRL currency prices from an external REST API, persists selected quotations into a PostgreSQL database using Panache, and emits events to Kafka when a new higher quotation price is detected.
+An event-driven microservice built with [Quarkus](https://quarkus.io/) that continuously monitors the **USD → BRL** currency exchange rate. The service polls an external REST API, persists new all-time-high quotations to a PostgreSQL database, and broadcasts price-increase events to an Apache Kafka topic for downstream consumers.
 
-## Quick status / what has been implemented
+---
 
-- REST client
-  - `org.stef.client.CurrencyPriceClient` — a MicroProfile Rest Client (`@RegisterRestClient`) that calls `https://economia.awesomeapi.com.br/last/{pair}`.
-- DTOs
-  - `org.stef.dto.CurrencyPriceDTO` — root DTO containing `USDBRL`.
-  - `org.stef.dto.USDBRL` — fields returned by the external API (bid, pctChange, etc.).
-  - `org.stef.dto.QuotationDTO` — minimal payload emitted to Kafka (date + currencyPrice).
-- Persistence
-  - `org.stef.entity.QuotationEntity` — JPA entity mapped to table `quotation`.
-  - `org.stef.repository.QuotationRepository` — Panache repository for `QuotationEntity`.
-  - `src/main/resources/import.sql` — placeholder import file for dev/test.
-- Business logic
-  - `org.stef.service.QuotationService` — fetches the latest price, compares it with the last stored record, persists a new record if the price increased, and triggers Kafka events.
-- Messaging
-  - `org.stef.message.KafkaEvents` — an `Emitter<QuotationDTO>` bound to channel `quotation-channel` (`@Channel("quotation-channel")`) which sends events to Kafka.
-- Configuration
-  - `src/main/resources/application.properties` — contains database, REST client and a few Kafka/messaging properties.
-- Build
-  - `pom.xml` — Quarkus BOM, dependencies include: `quarkus-hibernate-orm-panache`, `quarkus-jdbc-postgresql`, `quarkus-rest-client-jackson`, `quarkus-jackson`, and `quarkus-messaging-kafka`.
-- Docker
-  - Dockerfiles present in `src/main/docker/` for different packaging modes (`Dockerfile.jvm`, `Dockerfile.native*`, `Dockerfile.legacy-jar`).
+## 📑 Table of Contents
 
-## Project structure (important files)
+- [Architecture](#-architecture)
+- [Tech Stack](#-tech-stack)
+- [Core Workflow](#-core-workflow)
+- [Project Structure](#-project-structure)
+- [Getting Started](#-getting-started)
+    - [Prerequisites](#prerequisites)
+    - [1. Provision Infrastructure](#1-provision-infrastructure)
+    - [2. Run in Development Mode](#2-run-in-development-mode)
+    - [3. Build for Production](#3-build-for-production)
+- [Configuration](#-configuration)
+- [Kafka Events](#-kafka-events)
+- [API Reference](#-api-reference)
+- [Infrastructure Services](#-infrastructure-services)
 
-- src/main/java/org/stef/client/CurrencyPriceClient.java — MicroProfile Rest Client interface
-- src/main/java/org/stef/dto/* — DTO classes (CurrencyPriceDTO, USDBRL, QuotationDTO)
-- src/main/java/org/stef/entity/QuotationEntity.java — JPA entity
-- src/main/java/org/stef/repository/QuotationRepository.java — Panache repository
-- src/main/java/org/stef/service/QuotationService.java — business logic, persistence and event emission
-- src/main/java/org/stef/message/KafkaEvents.java — SmallRye Reactive Messaging Emitter wrapper
-- src/main/resources/application.properties — environment configuration
-- src/main/resources/import.sql — dev/test data import (commented template)
+---
 
-## How it works (runtime flow)
+## 🏗️ Architecture
 
-1. `QuotationService.getCurrencyPrice()` calls the remote service through `CurrencyPriceClient.getPriceByPair("USD-BRL")`.
-2. The service converts the returned `CurrencyPriceDTO` to a BigDecimal price and compares it to the last stored `QuotationEntity`.
-3. If there is no previous record, or the new price is greater than the last recorded price, it persists a new `QuotationEntity` and emits a `QuotationDTO` to the `quotation-channel` using `KafkaEvents.sendNewKafkaEvent(...)`.
-4. `KafkaEvents` holds an `Emitter<QuotationDTO>` tied to the `quotation-channel` and sends the payload downstream to the Kafka connector.
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Quarkus Application                         │
+│                                                                 │
+│  ┌─────────────────┐    ┌──────────────────┐                   │
+│  │  Quartz         │───▶│  CurrencyPrice   │                   │
+│  │  Scheduler      │    │  Client          │──▶ AwesomeAPI     │
+│  │  (every 35s)    │    │  (REST Client)   │    (External)     │
+│  └─────────────────┘    └──────────────────┘                   │
+│           │                      │                             │
+│           ▼                      ▼                             │
+│  ┌──────────────────────────────────────┐                      │
+│  │         QuotationService             │                      │
+│  │   (High-water mark business logic)   │                      │
+│  └──────────────────────────────────────┘                      │
+│           │                      │                             │
+│           ▼                      ▼                             │
+│  ┌─────────────────┐    ┌──────────────────┐                   │
+│  │  PostgreSQL     │    │  Kafka Producer  │──▶ `quotation`    │
+│  │  (Panache ORM)  │    │  (SmallRye)      │    topic          │
+│  └─────────────────┘    └──────────────────┘                   │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-## How to build and run
+---
 
-- Development mode (fast feedback):
+## 🧰 Tech Stack
 
-```powershell
+| Layer | Technology |
+|---|---|
+| Framework | [Quarkus](https://quarkus.io/) (Java) |
+| Scheduling | [Quartz](https://quarkus.io/guides/quartz) |
+| External API | [MicroProfile REST Client](https://quarkus.io/guides/rest-client) — AwesomeAPI |
+| Persistence | PostgreSQL + [Hibernate ORM with Panache](https://quarkus.io/guides/hibernate-orm-panache) |
+| Messaging | [Apache Kafka](https://kafka.apache.org/) via [SmallRye Reactive Messaging](https://smallrye.io/smallrye-reactive-messaging/) |
+| Infrastructure | Docker & Docker Compose |
+| Java Version | JDK 25 |
+
+---
+
+## ⚙️ Core Workflow
+
+The service implements a **high-water mark** strategy — only price increases are recorded and propagated.
+
+```
+Every 35 seconds
+      │
+      ▼
+[1] Poll AwesomeAPI for latest USD-BRL bid price
+      │
+      ▼
+[2] Query DB for the most recent stored quotation
+      │
+      ▼
+[3] Is new price > last stored price? (or DB is empty?)
+      │
+     YES ──▶ [4] Persist new Quotation entity to PostgreSQL
+                          │
+                          ▼
+                 [5] Emit QuotationDTO to
+                     `quotation` Kafka topic
+      │
+      NO ──▶ Discard — no action taken
+```
+
+| Step | Component | Responsibility |
+|---|---|---|
+| 1 | `QuotationScheduler` | Triggers the pipeline every 35 seconds via Quartz |
+| 2 | `CurrencyPriceClient` | Fetches the current `bid` rate from the AwesomeAPI |
+| 3 | `QuotationService` | Compares new price against the latest DB record |
+| 4 | `Quotation` (Panache Entity) | Persists the new high-water mark to PostgreSQL |
+| 5 | SmallRye Reactive Messaging | Publishes a `QuotationDTO` event to the `quotation` Kafka topic |
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+└── main/
+    ├── java/
+    │   └── .../
+    │       ├── client/
+    │       │   └── CurrencyPriceClient.java   # MicroProfile REST Client
+    │       ├── dto/
+    │       │   └── QuotationDTO.java          # Kafka event payload
+    │       ├── entity/
+    │       │   └── Quotation.java             # Panache entity
+    │       ├── scheduler/
+    │       │   └── QuotationScheduler.java    # Quartz job definition
+    │       └── service/
+    │           └── QuotationService.java      # Core business logic
+    └── resources/
+        └── application.properties             # App & infra configuration
+docker-compose.yaml                            # Local infrastructure
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **JDK 25** — required by the compiler release property
+- **Docker** and **Docker Compose** — for local infrastructure
+
+### 1. Provision Infrastructure
+
+Start all required services (PostgreSQL, Kafka, and the Kafka UI) with a single command:
+
+```bash
+docker-compose up -d
+```
+
+This will spin up:
+
+| Service | Description | Port |
+|---|---|---|
+| PostgreSQL | Application database | `5432` |
+| Apache Kafka (KRaft) | Message broker | `9092` |
+| Conduktor Console | Kafka management UI | `9080` |
+
+Verify all containers are healthy before proceeding:
+
+```bash
+docker-compose ps
+```
+
+### 2. Run in Development Mode
+
+Quarkus Dev Mode provides live coding, automatic restart on file changes, and the [Dev UI](http://localhost:8080/q/dev):
+
+```bash
 ./mvnw quarkus:dev
 ```
 
-- Package an executable jar (fast):
+The application will start at **http://localhost:8080**.
 
-```powershell
-./mvnw package -DskipTests
+> **Tip:** In Dev Mode, Quarkus can automatically provision PostgreSQL and Kafka containers via **Dev Services** — check `application.properties` to see if this is configured, in which case step 1 may be optional for local development.
+
+### 3. Build for Production
+
+**Standard JVM build:**
+
+```bash
+./mvnw package
 java -jar target/quarkus-app/quarkus-run.jar
 ```
 
-- Docker (example for JVM Dockerfile):
+**Native executable (GraalVM required):**
 
-```powershell
-docker build -f src/main/docker/Dockerfile.jvm -t quotation-service:jvm .
-docker run -e QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://host.docker.internal:5432/quotationdb -e QUARKUS_DATASOURCE_USERNAME=postgres -e QUARKUS_DATASOURCE_PASSWORD=1234 -p 8080:8080 quotation-service:jvm
+```bash
+./mvnw package -Pnative
+./target/*-runner
 ```
 
-## How to test the Kafka path locally (quick checklist)
+---
 
-- Start a local Kafka broker (for example using Docker / Confluent images or `bitnami/kafka`).
-- Ensure the `quotation` topic exists or let Kafka auto-create it (depending on broker settings).
-- Start the Quarkus app in dev mode and trigger `QuotationService.getCurrencyPrice()` (you can add a quick REST endpoint or call it from a unit test / scheduler).
-- Observe logs and use `kafka-console-consumer` to verify messages.
+## 🔧 Configuration
 
-## Known limitations & next steps
+Key properties in `src/main/resources/application.properties`:
 
-- Serialization: current code sends `QuotationDTO` objects. Confirm the outgoing channel serializer or send JSON strings explicitly.
-- Error handling: network errors from the external API are not handled (no retries/backoff).
-- Scheduling: there is a `scheduler` package present but currently empty — add a `@Scheduled` job to call `getCurrencyPrice()` periodically.
-- Consumer: there is only an emitter (producer side). Add a consumer implementation if you need internal processing of the topic.
-- Tests: add unit and integration tests (Quarkus `@QuarkusTest`) to validate persistence and messaging.
+```properties
+# DataSource
+quarkus.datasource.db-kind=postgresql
+quarkus.datasource.username=<user>
+quarkus.datasource.password=<password>
+quarkus.datasource.jdbc.url=jdbc:postgresql://localhost:5432/<db>
 
+# Hibernate ORM
+quarkus.hibernate-orm.database.generation=update
+
+# Kafka
+kafka.bootstrap.servers=localhost:9092
+mp.messaging.outgoing.quotation.connector=smallrye-kafka
+mp.messaging.outgoing.quotation.topic=quotation
+mp.messaging.outgoing.quotation.value.serializer=...
+
+# External API
+quarkus.rest-client.awesome-api.url=https://economia.awesomeapi.com.br
+```
+
+> Update credentials and URLs to match your environment.
+
+---
+
+## 📨 Kafka Events
+
+When a new high-water mark is detected, the service publishes a message to the **`quotation`** topic.
+
+**Topic:** `quotation`  
+**Payload — `QuotationDTO`:**
+
+```json
+{
+  "id": 42,
+  "bid": "5.4231",
+  "timestamp": "2025-01-15T10:30:00"
+}
+```
+
+> Field names may vary based on your `QuotationDTO` implementation. The topic can be inspected via the **Conduktor Console** at [http://localhost:9080](http://localhost:9080).
+
+---
+
+## 🌐 API Reference
+
+**External data source:** [AwesomeAPI](https://docs.awesomeapi.com.br/)
+
+The service calls the following endpoint:
+
+```
+GET https://economia.awesomeapi.com.br/json/last/USD-BRL
+```
+
+**Sample response (abbreviated):**
+
+```json
+{
+  "USDBRL": {
+    "bid": "5.4231",
+    "ask": "5.4300",
+    "high": "5.4500",
+    "low": "5.4100",
+    "timestamp": "1736938200"
+  }
+}
+```
+
+---
+
+## 🐳 Infrastructure Services
+
+| Service | Image | Port | Purpose |
+|---|---|---|---|
+| `postgres` | `postgres:latest` | `5432` | Primary application database |
+| `kafka` | KRaft-mode Kafka | `9092` | Message broker |
+| `conduktor-console` | `conduktor/conduktor-platform` | `9080` | Kafka management & monitoring UI |
+
+To stop and remove all containers:
+
+```bash
+docker-compose down
+```
+
+To also remove persisted volumes:
+
+```bash
+docker-compose down -v
+```
+
+---
