@@ -74,5 +74,4 @@ public class ProposalServiceImpl implements ProposalService{
     public void removeProposal(Long id) {
         proposalRepository.deleteById(id);
     }
-
 }

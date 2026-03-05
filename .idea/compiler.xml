@@ -6,6 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="report" />
       </profile>
       <profile name="Annotation profile for project" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -32,6 +33,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="project" options="-parameters" />
       <module name="proposal" options="" />
+      <module name="report" options="-parameters" />
     </option>
   </component>
 </project>
