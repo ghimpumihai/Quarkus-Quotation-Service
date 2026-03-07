@@ -79,4 +79,21 @@ public class OpportunityServiceImpl implements OpportunityService {
 
         return CSVHelper.opportunitiesToCSV(opportunityDTOs);
     }
+
+    public List<OpportunityDTO> generateOpportunityReport(){
+        List<OpportunityDTO> opportunities= new ArrayList<>();
+
+        opportunityRepository.findAll()
+                .stream()
+                .forEach(item->{
+                    opportunities.add(OpportunityDTO.builder()
+                            .proposalId(item.getProposalId())
+                            .customer(item.getCustomer())
+                            .priceTonne(item.getPriceTonne())
+                            .lastCurrencyQuotation(item.getLastCurrencyQuotation())
+                            .build()
+                    );
+                });
+        return opportunities;
+    }
 }

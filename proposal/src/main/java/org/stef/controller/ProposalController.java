@@ -1,28 +1,37 @@
 package org.stef.controller;
 
 
+import io.quarkus.security.Authenticated;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
 import org.stef.dto.ProposalDetailsDTO;
 import org.stef.service.ProposalService;
 
 @Path("/api/proposal")
+@Authenticated
 public class ProposalController {
 
     private final Logger LOG = Logger.getLogger(ProposalController.class);
+
+    @Inject
+    JsonWebToken jwt;
 
     @Inject
     ProposalService proposalService;
 
     @GET
     @Path("/{id}")
+    @RolesAllowed({"user","manager"})
     public ProposalDetailsDTO findDetailsProposal(@PathParam("id") Long id) {
         return proposalService.findFullProposal(id);
     }
 
     @POST
+    @RolesAllowed("proposal-customer")
     public Response createProposal(ProposalDetailsDTO proposalDetailsDTO) {
         try {
             proposalService.createProposal(proposalDetailsDTO);
@@ -37,6 +46,7 @@ public class ProposalController {
 
     @DELETE
     @Path("/{id}")
+    @RolesAllowed("manager")
     public Response deleteProposal(@PathParam("id") Long id) {
         try {
             proposalService.removeProposal(id);

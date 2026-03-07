@@ -14,4 +14,6 @@ public interface OpportunityService {
     void saveQuotation(QuotationDTO quotationDTO);
 
     ByteArrayInputStream generateCSVOpportunityReport();
+
+    List<OpportunityDTO> generateOpportunityReport();
 }
