@@ -3,6 +3,9 @@ package org.stef.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stef.dto.OpportunityDTO;
 import org.stef.dto.ProposalDTO;
 import org.stef.dto.QuotationDTO;
@@ -13,6 +16,7 @@ import org.stef.repository.QuotationRepository;
 import org.stef.utils.CSVHelper;
 
 import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,6 +30,8 @@ public class OpportunityServiceImpl implements OpportunityService {
     @Inject
     OpportunitiesRepository opportunityRepository;
 
+    private static final Logger LOG = LoggerFactory.getLogger(OpportunityServiceImpl.class);
+
     @Override
     @Transactional
     public void buildOpportunity(ProposalDTO proposalDTO) {
@@ -36,10 +42,15 @@ public class OpportunityServiceImpl implements OpportunityService {
         opportunity.setDate(new Date());
         opportunity.setPriceTonne(proposalDTO.priceTonne());
         opportunity.setProposalId(proposalDTO.proposalId());
-        opportunity.setLastCurrencyQuotation(quotations.getLast().getCurrencyPrice());
+
+        if (!quotations.isEmpty()) {
+            opportunity.setLastCurrencyQuotation(quotations.getLast().getCurrencyPrice());
+        } else {
+            LOG.warn("No quotations found in DB for proposal: {}", proposalDTO.proposalId());
+            opportunity.setLastCurrencyQuotation(BigDecimal.valueOf(0.0));
+        }
 
         opportunityRepository.persist(opportunity);
-
     }
 
     @Override

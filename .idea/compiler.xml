@@ -6,18 +6,17 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="report" />
       </profile>
-      <profile name="Annotation profile for project" enabled="true">
+      <profile name="Annotation profile for quotation" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
         </processorPath>
-        <module name="project" />
+        <module name="quotation" />
       </profile>
-      <profile name="Annotation profile for proposal" enabled="true">
+      <profile name="Annotation profile for record" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -26,14 +25,15 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok-mapstruct-binding/0.2.0/lombok-mapstruct-binding-0.2.0.jar" />
         </processorPath>
         <module name="proposal" />
+        <module name="record" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="project" options="-parameters" />
-      <module name="proposal" options="" />
-      <module name="report" options="-parameters" />
+      <module name="proposal" options="-parameters" />
+      <module name="quotation" options="-parameters" />
+      <module name="record" options="-parameters" />
     </option>
   </component>
 </project>
