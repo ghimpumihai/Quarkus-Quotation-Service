@@ -22,13 +22,17 @@ import java.util.List;
 @ApplicationScoped
 public class OpportunityServiceImpl implements OpportunityService {
 
-    @Inject
-    QuotationRepository quotationRepository;
+    private final QuotationRepository quotationRepository;
 
-    @Inject
-    OpportunitiesRepository opportunityRepository;
+    private final OpportunitiesRepository opportunityRepository;
 
     private static final Logger LOG = LoggerFactory.getLogger(OpportunityServiceImpl.class);
+
+    @Inject
+    public OpportunityServiceImpl(QuotationRepository quotationRepository, OpportunitiesRepository opportunityRepository) {
+        this.quotationRepository = quotationRepository;
+        this.opportunityRepository = opportunityRepository;
+    }
 
     @Override
     @Transactional

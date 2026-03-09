@@ -5,9 +5,8 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.stef.dto.OpportunityDTO;
-import org.stef.service.OpportunityServiceImpl;
+import org.stef.service.OpportunityService;
 
 import java.util.List;
 
@@ -15,11 +14,12 @@ import java.util.List;
 @Authenticated
 public class OpportunityController {
 
-    @Inject
-    OpportunityServiceImpl opportunityService;
+    private final OpportunityService opportunityService;
 
     @Inject
-    JsonWebToken jwt;
+    public OpportunityController(OpportunityService opportunityService) {
+        this.opportunityService = opportunityService;
+    }
 
     @GET
     @Path("/data")

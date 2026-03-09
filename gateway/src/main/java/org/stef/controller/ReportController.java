@@ -18,8 +18,12 @@ import java.util.Date;
 @Path("/api/report")
 public class ReportController {
 
+    private final ReportService reportService;
+
     @Inject
-    ReportService reportService;
+    public ReportController(ReportService reportService) {
+        this.reportService = reportService;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)

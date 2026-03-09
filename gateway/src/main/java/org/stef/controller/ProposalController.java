@@ -14,8 +14,14 @@ import org.stef.service.ProposalService;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class ProposalController {
+
+    private final ProposalService proposalService;
+
     @Inject
-    ProposalService proposalService;
+    ProposalController(ProposalService proposalService) {
+        this.proposalService = proposalService;
+
+    }
 
     @GET
     @Path("/{id}")
@@ -32,12 +38,13 @@ public class ProposalController {
     @POST
     @RolesAllowed("proposal-customer")
     public Response createNewProposal(ProposalDetailsDTO proposalDetailsDTO){
-        int proposalRequestStatus = proposalService.createProposal(proposalDetailsDTO).getStatus();
-        if(proposalRequestStatus > 199 && proposalRequestStatus < 205){
-            return Response.ok().build();
-        }
-        else{
-            return Response.status(proposalRequestStatus).build();
+        try (Response response = proposalService.createProposal(proposalDetailsDTO)) {
+            int proposalRequestStatus = response.getStatus();
+            if (proposalRequestStatus > 199 && proposalRequestStatus < 205) {
+                return Response.ok().build();
+            } else {
+                return Response.status(proposalRequestStatus).build();
+            }
         }
     }
 
@@ -45,12 +52,13 @@ public class ProposalController {
     @Path("/remove/{id}")
     @RolesAllowed("manager")
     public Response removeProposal(@PathParam("id") Long id){
-        int proposalRequestStatus = proposalService.removeProposal(id).getStatus();
-        if(proposalRequestStatus > 199 && proposalRequestStatus < 205){
-            return Response.ok().build();
-        }
-        else{
-            return Response.status(proposalRequestStatus).build();
+        try(Response response = proposalService.removeProposal(id)) {
+            int proposalRequestStatus = response.getStatus();
+            if (proposalRequestStatus > 199 && proposalRequestStatus < 205) {
+                return Response.ok().build();
+            } else {
+                return Response.status(proposalRequestStatus).build();
+            }
         }
     }
 }

@@ -8,15 +8,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stef.dto.ProposalDTO;
 import org.stef.dto.QuotationDTO;
-import org.stef.service.OpportunityServiceImpl;
+import org.stef.service.OpportunityService;
 
 @ApplicationScoped
 public class KafkaEvent {
 
     private final Logger LOG = LoggerFactory.getLogger(KafkaEvent.class);
 
+    private final OpportunityService opportunityService;
+
     @Inject
-    OpportunityServiceImpl opportunityService;
+    public KafkaEvent(OpportunityService opportunityService) {
+        this.opportunityService = opportunityService;
+    }
 
     @Incoming("proposal-channel")
     @Transactional

@@ -13,9 +13,12 @@ import java.util.List;
 @ApplicationScoped
 public class ReportServiceImpl implements ReportService {
 
+    private final ReportRestClient reportRestClient;
+
     @Inject
-    @RestClient
-    ReportRestClient reportRestClient;
+    public ReportServiceImpl(@RestClient ReportRestClient reportRestClient) {
+        this.reportRestClient = reportRestClient;
+    }
 
     @Override
     public ByteArrayInputStream generateCSVOpportunityReport() {

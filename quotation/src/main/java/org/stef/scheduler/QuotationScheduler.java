@@ -11,10 +11,14 @@ import org.stef.service.QuotationService;
 @ApplicationScoped
 public class QuotationScheduler {
 
-    @Inject
-    QuotationService quotationService;
+    private final QuotationService quotationService;
 
     private final Logger LOG = LoggerFactory.getLogger(QuotationScheduler.class);
+
+    @Inject
+    public QuotationScheduler(QuotationService quotationService) {
+        this.quotationService = quotationService;
+    }
 
     @Transactional
     @Scheduled(every = "60s", identity = "task-job")

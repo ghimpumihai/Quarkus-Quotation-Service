@@ -10,9 +10,12 @@ import org.stef.dto.ProposalDetailsDTO;
 @ApplicationScoped
 public class ProposalServiceImpl implements ProposalService {
 
+    private final ProposalRestClient proposalRestClient;
+
     @Inject
-    @RestClient
-    ProposalRestClient proposalRestClient;
+    public ProposalServiceImpl(@RestClient ProposalRestClient proposalRestClient) {
+        this.proposalRestClient = proposalRestClient;
+    }
 
     @Override
     public ProposalDetailsDTO getProposalDetailsById(Long id) {

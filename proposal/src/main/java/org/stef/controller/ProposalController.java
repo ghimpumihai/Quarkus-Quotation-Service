@@ -7,7 +7,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
 import org.stef.dto.ProposalDetailsDTO;
 import org.stef.service.ProposalService;
@@ -20,11 +19,12 @@ public class ProposalController {
 
     private final Logger LOG = Logger.getLogger(ProposalController.class);
 
-    @Inject
-    JsonWebToken jwt;
+    private final ProposalService proposalService;
 
     @Inject
-    ProposalService proposalService;
+    public ProposalController(ProposalService proposalService) {
+        this.proposalService = proposalService;
+    }
 
     @GET
     @Path("/{id}")

@@ -14,13 +14,17 @@ import org.jboss.logging.Logger;
 @ApplicationScoped
 public class ProposalServiceImpl implements ProposalService{
 
-    @Inject
-    ProposalRepository proposalRepository;
+    private final ProposalRepository proposalRepository;
 
-    @Inject
-    KafkaEvent kafkaMessages;
+    private final KafkaEvent kafkaMessages;
 
     private static final Logger LOG = Logger.getLogger(ProposalServiceImpl.class);
+
+    @Inject
+    public ProposalServiceImpl(ProposalRepository proposalRepository, KafkaEvent kafkaMessages) {
+        this.proposalRepository = proposalRepository;
+        this.kafkaMessages = kafkaMessages;
+    }
 
     @Override
     public ProposalDetailsDTO findFullProposal(Long id) {
