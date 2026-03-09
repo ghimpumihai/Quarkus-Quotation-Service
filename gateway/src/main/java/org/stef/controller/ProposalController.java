@@ -18,7 +18,7 @@ public class ProposalController {
     private final ProposalService proposalService;
 
     @Inject
-    ProposalController(ProposalService proposalService) {
+    public ProposalController(ProposalService proposalService) {
         this.proposalService = proposalService;
 
     }

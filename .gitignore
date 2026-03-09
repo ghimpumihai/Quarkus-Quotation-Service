@@ -1,2 +1,4 @@
 quarkus-realm.json
 .idea
+target
+TEST-PLAN-IMPLEMENTATION.md
