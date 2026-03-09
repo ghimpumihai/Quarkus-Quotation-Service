@@ -4,12 +4,15 @@ package org.stef.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stef.client.CurrencyPriceClient;
 import org.stef.dto.CurrencyPriceDTO;
 import org.stef.dto.QuotationDTO;
 import org.stef.entity.Quotation;
 import org.stef.message.KafkaEvents;
 import org.stef.repository.QuotationRepository;
+import org.stef.scheduler.QuotationScheduler;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -28,8 +31,12 @@ public class QuotationService {
     @Inject
     KafkaEvents kafkaEvents;
 
+    private final Logger LOG = LoggerFactory.getLogger(QuotationService.class);
+
+
     public void getCurrencyPrice(){
         CurrencyPriceDTO currencyPriceInfo = currencyPriceClient.getPriceByPair("USD-BRL");
+        //LOG.info("Fetched currency price: USD-BRL = {}", currencyPriceInfo.USDBRL().bid());
         if(updateCurrentInfoPrice(currencyPriceInfo)){
             kafkaEvents.sendNewKafkaEvent(QuotationDTO
                     .builder()
@@ -43,11 +50,14 @@ public class QuotationService {
         BigDecimal currentPrice = new BigDecimal(currencyPriceInfo.USDBRL().bid());
         boolean updatedPrice = false;
         List<Quotation> quotationList = quotationRepository.findAll().list();
+        LOG.info("Comparing current price with the last recorded price...");
         if(quotationList.isEmpty()){
+            LOG.info("No previous quotations found. Saving the first quotation.");
             saveQuotation(currencyPriceInfo);
             updatedPrice = true;
         }
         else{
+            LOG.info("Last recorded price: USD-BRL = {}", quotationList.getLast().getCurrencyPrice());
             Quotation lastDollarPrice = quotationList.getLast();
 
             if(currentPrice.floatValue() > lastDollarPrice.getCurrencyPrice().floatValue()){
@@ -59,6 +69,7 @@ public class QuotationService {
     }
 
     private void saveQuotation(CurrencyPriceDTO currencyDTO){
+        LOG.info("Saving new quotation: USD-BRL = {}", currencyDTO.USDBRL().bid());
         Quotation quotation = new Quotation();
 
         quotation.setDate(new Date());

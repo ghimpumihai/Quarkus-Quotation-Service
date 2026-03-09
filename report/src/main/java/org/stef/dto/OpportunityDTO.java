@@ -7,11 +7,9 @@ import java.math.BigDecimal;
 
 @Builder
 @Jacksonized
-public record ProposalDetailsDTO(
+public record OpportunityDTO (
         Long proposalId,
         String customer,
         BigDecimal priceTonne,
-        Integer tonnes,
-        String country,
-        Integer proposalValidityDays
+        BigDecimal lastCurrencyQuotation
 ) {}

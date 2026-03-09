@@ -5,6 +5,7 @@ import io.quarkus.security.Authenticated;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
@@ -13,6 +14,8 @@ import org.stef.service.ProposalService;
 
 @Path("/api/proposal")
 @Authenticated
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 public class ProposalController {
 
     private final Logger LOG = Logger.getLogger(ProposalController.class);

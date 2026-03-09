@@ -13,9 +13,7 @@ import org.stef.entity.Opportunity;
 import org.stef.entity.Quotation;
 import org.stef.repository.OpportunitiesRepository;
 import org.stef.repository.QuotationRepository;
-import org.stef.utils.CSVHelper;
 
-import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -61,23 +59,6 @@ public class OpportunityServiceImpl implements OpportunityService {
         quotation.setDate(new Date());
 
         quotationRepository.persist(quotation);
-    }
-
-    @Override
-    public ByteArrayInputStream generateCSVOpportunityReport() {
-        List<OpportunityDTO> opportunityDTOs = new ArrayList<>();
-
-        opportunityRepository.findAll().list().forEach(item->{
-            opportunityDTOs.add(OpportunityDTO.builder()
-                    .proposalId(item.getProposalId())
-            .customer(item.getCustomer())
-            .priceTonne(item.getPriceTonne())
-            .lastCurrencyQuotation(item.getLastCurrencyQuotation())
-                            .build()
-            );
-        });
-
-        return CSVHelper.opportunitiesToCSV(opportunityDTOs);
     }
 
     public List<OpportunityDTO> generateOpportunityReport(){

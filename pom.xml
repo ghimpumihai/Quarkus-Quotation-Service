@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>io.github.ghimpumihai</groupId>
     <artifactId>Quarkus-Quotation-Service-Parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
@@ -11,19 +8,18 @@
 
     <modules>
         <module>quotation</module>
-        <module>record</module>
+        <module>report</module>
         <module>proposal</module>
+        <module>gateway</module>
     </modules>
 
     <properties>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>ghimpumihai</sonar.organization>
         <sonar.projectKey>ghimpumihai_Quarkus-Quotation-Service</sonar.projectKey>
-
         <sonar.token>${env.SONAR_TOKEN}</sonar.token>
     </properties>
 
@@ -35,7 +31,6 @@
                     <artifactId>sonar-maven-plugin</artifactId>
                     <version>3.10.0.2594</version>
                 </plugin>
-
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
