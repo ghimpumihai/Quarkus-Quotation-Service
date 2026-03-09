@@ -1,7 +1,0 @@
-organization=ghimpumihai
-projectKey=ghimpumihai_Quarkus-Quotation-Service
-serverUrl=https://sonarcloud.io
-serverVersion=8.0.0.82609
-dashboardUrl=https://sonarcloud.io/dashboard?id=ghimpumihai_Quarkus-Quotation-Service
-ceTaskId=AZzUi6ZLykfvVOFJqyhz
-ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZzUi6ZLykfvVOFJqyhz
