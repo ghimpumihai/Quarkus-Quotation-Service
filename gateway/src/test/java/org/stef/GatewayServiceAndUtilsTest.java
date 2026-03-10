@@ -10,7 +10,6 @@ import org.stef.service.ReportServiceImpl;
 import org.stef.utils.CSVHelper;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -47,7 +46,7 @@ class GatewayServiceAndUtilsTest {
     }
 
     @Test
-    void reportServiceBuildsCsvFromRestClientData() throws IOException {
+    void reportServiceBuildsCsvFromRestClientData() {
         ReportRestClient client = mock(ReportRestClient.class);
         ReportServiceImpl service = new ReportServiceImpl(client);
         List<OpportunityDTO> opportunities = List.of(OpportunityDTO.builder()
@@ -70,7 +69,7 @@ class GatewayServiceAndUtilsTest {
     }
 
     @Test
-    void csvHelperSerializesHeadersAndRows() throws IOException {
+    void csvHelperSerializesHeadersAndRows() {
         ByteArrayInputStream stream = CSVHelper.opportunitiesToCSV(List.of(
                 OpportunityDTO.builder()
                         .proposalId(1L)

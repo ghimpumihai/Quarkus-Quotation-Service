@@ -13,8 +13,14 @@ import org.apache.commons.csv.CSVPrinter;
 
 
 public class CSVHelper {
+
+    private CSVHelper() {
+        // Private constructor to prevent instantiation
+    }
     public static ByteArrayInputStream opportunitiesToCSV(List<OpportunityDTO> opportunities) {
-        final CSVFormat format = CSVFormat.DEFAULT.withHeader("proposalId", "customer", "priceTonne", "tonnes", "country", "proposalValidityDays");
+        final CSVFormat format = CSVFormat.DEFAULT.builder()
+                .setHeader("proposalId", "customer", "priceTonne", "tonnes", "country", "proposalValidityDays")
+                .build();
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
              CSVPrinter csvPrinter = new CSVPrinter(new PrintWriter(out), format)) {
             for (OpportunityDTO opp : opportunities) {

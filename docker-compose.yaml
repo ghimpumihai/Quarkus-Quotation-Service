@@ -27,11 +27,11 @@ services:
       - "5434:5432"
     logging: *default-logging
 
-  record-db:
+  report-db:
     image: postgres:14-alpine
-    container_name: record-db
+    container_name: report-db
     environment:
-      POSTGRES_DB: record
+      POSTGRES_DB: report
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
     ports:

@@ -70,15 +70,14 @@ public class OpportunityServiceImpl implements OpportunityService {
 
         opportunityRepository.findAll()
                 .stream()
-                .forEach(item->{
-                    opportunities.add(OpportunityDTO.builder()
-                            .proposalId(item.getProposalId())
-                            .customer(item.getCustomer())
-                            .priceTonne(item.getPriceTonne())
-                            .lastCurrencyQuotation(item.getLastCurrencyQuotation())
-                            .build()
-                    );
-                });
+                .forEach(item->
+                        opportunities.add(OpportunityDTO.builder()
+                        .proposalId(item.getProposalId())
+                        .customer(item.getCustomer())
+                        .priceTonne(item.getPriceTonne())
+                        .lastCurrencyQuotation(item.getLastCurrencyQuotation())
+                        .build()
+                ));
         return opportunities;
     }
 }
