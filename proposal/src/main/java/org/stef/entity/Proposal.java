@@ -18,7 +18,7 @@ import java.util.Date;
 @AllArgsConstructor
 public class Proposal {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String customer;
