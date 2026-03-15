@@ -20,6 +20,7 @@ import org.stef.repository.QuotationRepository;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @ApplicationScoped
 public class OpportunityServiceImpl implements OpportunityService {
@@ -83,17 +84,34 @@ public class OpportunityServiceImpl implements OpportunityService {
         }
     }
 
-
     public List<OpportunityDTO> generateOpportunityReport() {
         try {
             return opportunityRepository.findAll()
                     .stream()
-                    .map(item -> OpportunityDTO.builder()
-                            .proposalId(item.getProposalId())
-                            .customer(item.getCustomer())
-                            .priceTonne(item.getPriceTonne())
-                            .lastCurrencyQuotation(item.getLastCurrencyQuotation())
-                            .build())
+                    .filter(item -> {
+                        if (item == null) {
+                            LOG.warn("Skipping null opportunity entity");
+                            return false;
+                        }
+                        return true;
+                    })
+                    .map(item -> {
+                        try {
+                            return OpportunityDTO.builder()
+                                    .proposalId(item.getProposalId())
+                                    .customer(item.getCustomer())
+                                    .priceTonne(item.getPriceTonne())
+                                    .lastCurrencyQuotation(item.getLastCurrencyQuotation() != null
+                                            ? item.getLastCurrencyQuotation()
+                                            : BigDecimal.ZERO)
+                                    .build();
+                        } catch (Exception e) {
+                            LOG.warn("Skipping opportunity due to mapping error for proposalId: {}, cause: {}",
+                                    item.getProposalId(), e.getMessage());
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
                     .toList();
         } catch (Exception e) {
             LOG.error("Failed to generate opportunity report", e);

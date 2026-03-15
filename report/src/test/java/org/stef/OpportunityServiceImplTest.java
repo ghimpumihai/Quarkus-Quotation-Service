@@ -16,6 +16,7 @@ import org.stef.exception.QuotationPersistenceException;
 import org.stef.exception.ReportGenerationException;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -210,13 +211,19 @@ class OpportunityServiceImplTest {
         OpportunityServiceImpl service = new OpportunityServiceImpl(quotationRepository, opportunitiesRepository);
         @SuppressWarnings("unchecked")
         PanacheQuery<Opportunity> opportunityQuery = mock(PanacheQuery.class);
-        Opportunity valid = new Opportunity();
-        valid.setProposalId(1L);
-        valid.setCustomer("ACME");
-        valid.setPriceTonne(new BigDecimal("20.00"));
-        valid.setLastCurrencyQuotation(new BigDecimal("5.00"));
+
+        Opportunity valid = mock(Opportunity.class);
+        when(valid.getProposalId()).thenReturn(1L);
+        when(valid.getCustomer()).thenReturn("ACME");
+        when(valid.getPriceTonne()).thenReturn(new BigDecimal("20.00"));
+        when(valid.getLastCurrencyQuotation()).thenReturn(new BigDecimal("5.00"));
+
+        List<Opportunity> withNull = new ArrayList<>();
+        withNull.add(null);
+        withNull.add(valid);
+
         when(opportunitiesRepository.findAll()).thenReturn(opportunityQuery);
-        when(opportunityQuery.stream()).thenReturn(Stream.of(null, valid));
+        when(opportunityQuery.stream()).thenReturn(withNull.stream());
 
         List<OpportunityDTO> result = service.generateOpportunityReport();
 
@@ -231,17 +238,18 @@ class OpportunityServiceImplTest {
         OpportunityServiceImpl service = new OpportunityServiceImpl(quotationRepository, opportunitiesRepository);
         @SuppressWarnings("unchecked")
         PanacheQuery<Opportunity> opportunityQuery = mock(PanacheQuery.class);
-        Opportunity opportunity = new Opportunity();
-        opportunity.setProposalId(1L);
-        opportunity.setCustomer("ACME");
-        opportunity.setPriceTonne(new BigDecimal("20.00"));
-        opportunity.setLastCurrencyQuotation(null);
+
+        Opportunity opportunity = mock(Opportunity.class);
+        when(opportunity.getProposalId()).thenReturn(1L);
+        when(opportunity.getCustomer()).thenReturn("ACME");
+        when(opportunity.getPriceTonne()).thenReturn(new BigDecimal("20.00"));
+        when(opportunity.getLastCurrencyQuotation()).thenReturn(null);
+
         when(opportunitiesRepository.findAll()).thenReturn(opportunityQuery);
         when(opportunityQuery.stream()).thenReturn(Stream.of(opportunity));
 
         List<OpportunityDTO> result = service.generateOpportunityReport();
 
         assertEquals(1, result.size());
-        assertEquals(0, BigDecimal.ZERO.compareTo(result.getFirst().lastCurrencyQuotation()));
-    }
+        assertEquals(0, BigDecimal.ZERO.compareTo(result.getFirst().lastCurrencyQuotation()));    }
 }
