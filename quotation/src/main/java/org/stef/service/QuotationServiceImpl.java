@@ -3,6 +3,7 @@ package org.stef.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,8 @@ import org.stef.client.CurrencyPriceClient;
 import org.stef.dto.CurrencyPriceDTO;
 import org.stef.dto.QuotationDTO;
 import org.stef.entity.Quotation;
+import org.stef.exception.InvalidCurrencyCodeException;
+import org.stef.exception.ProviderUnavailableException;
 import org.stef.message.KafkaEvents;
 import org.stef.repository.QuotationRepository;
 
@@ -40,10 +43,27 @@ public class QuotationServiceImpl implements QuotationService {
 
 
     @Override
-    public void getCurrencyPrice(){
-        CurrencyPriceDTO currencyPriceInfo = currencyPriceClient.getPriceByPair("USD-BRL");
-        //LOG.info("Fetched currency price: USD-BRL = {}", currencyPriceInfo.USDBRL().bid());
-        if(updateCurrentInfoPrice(currencyPriceInfo)){
+    public void getCurrencyPrice() {
+        CurrencyPriceDTO currencyPriceInfo;
+
+        try {
+            currencyPriceInfo = currencyPriceClient.getPriceByPair("USD-BRL");
+        } catch (WebApplicationException e) {
+            int status = e.getResponse().getStatus();
+            if (status >= 500) {
+                throw new ProviderUnavailableException(
+                        "Currency API is unavailable (HTTP " + status + ")", e
+                );
+            }
+            if (status == 400) {
+                throw new InvalidCurrencyCodeException("USD-BRL");
+            }
+            throw new ProviderUnavailableException(
+                    "Unexpected response from currency API (HTTP " + status + ")", e
+            );
+        }
+
+        if (updateCurrentInfoPrice(currencyPriceInfo)) {
             kafkaEvents.sendNewKafkaEvent(QuotationDTO
                     .builder()
                     .currencyPrice(new BigDecimal(currencyPriceInfo.USDBRL().bid()))
