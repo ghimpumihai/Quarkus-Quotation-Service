@@ -15,6 +15,7 @@ import java.util.List;
 @Path("/api/report")
 @RegisterRestClient
 @RegisterProvider(AccessTokenRequestReactiveFilter.class)
+@RegisterProvider(GatewayResponseExceptionMapper.class)
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 public interface ReportRestClient {

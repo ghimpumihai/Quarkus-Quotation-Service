@@ -2,7 +2,6 @@ package org.stef.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.stef.client.ProposalRestClient;
 import org.stef.dto.ProposalDetailsDTO;
@@ -23,12 +22,12 @@ public class ProposalServiceImpl implements ProposalService {
     }
 
     @Override
-    public Response createProposal(ProposalDetailsDTO proposalDetailsDTO) {
-        return proposalRestClient.createProposal(proposalDetailsDTO);
+    public void createProposal(ProposalDetailsDTO proposalDetailsDTO) {
+        proposalRestClient.createProposal(proposalDetailsDTO);
     }
 
     @Override
-    public Response removeProposal(Long id) {
-        return proposalRestClient.deleteProposal(id);
+    public void removeProposal(Long id) {
+        proposalRestClient.deleteProposal(id);
     }
 }

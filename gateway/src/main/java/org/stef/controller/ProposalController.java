@@ -20,45 +20,27 @@ public class ProposalController {
     @Inject
     public ProposalController(ProposalService proposalService) {
         this.proposalService = proposalService;
-
     }
 
     @GET
     @Path("/{id}")
-    @RolesAllowed({"manager","user"})
+    @RolesAllowed({"manager", "user"})
     public Response getProposalDetailsById(@PathParam("id") Long id) {
-        try{
-            return Response.ok(proposalService.getProposalDetailsById(id),MediaType.APPLICATION_JSON).build();
-        }
-        catch(ServerErrorException e){
-            return Response.serverError().build();
-        }
+        return Response.ok(proposalService.getProposalDetailsById(id)).build();
     }
 
     @POST
     @RolesAllowed("proposal-customer")
-    public Response createNewProposal(ProposalDetailsDTO proposalDetailsDTO){
-        try (Response response = proposalService.createProposal(proposalDetailsDTO)) {
-            int proposalRequestStatus = response.getStatus();
-            if (proposalRequestStatus > 199 && proposalRequestStatus < 205) {
-                return Response.ok().build();
-            } else {
-                return Response.status(proposalRequestStatus).build();
-            }
-        }
+    public Response createNewProposal(ProposalDetailsDTO proposalDetailsDTO) {
+        proposalService.createProposal(proposalDetailsDTO);
+        return Response.status(Response.Status.CREATED).build();
     }
 
     @DELETE
     @Path("/remove/{id}")
     @RolesAllowed("manager")
-    public Response removeProposal(@PathParam("id") Long id){
-        try(Response response = proposalService.removeProposal(id)) {
-            int proposalRequestStatus = response.getStatus();
-            if (proposalRequestStatus > 199 && proposalRequestStatus < 205) {
-                return Response.ok().build();
-            } else {
-                return Response.status(proposalRequestStatus).build();
-            }
-        }
+    public Response removeProposal(@PathParam("id") Long id) {
+        proposalService.removeProposal(id);
+        return Response.noContent().build();
     }
 }

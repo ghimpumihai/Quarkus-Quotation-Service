@@ -27,7 +27,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public List<OpportunityDTO> getOppotunitiesData() {
+    public List<OpportunityDTO> getOpportunitiesData() {
         return reportRestClient.requestOpportunityData();
     }
 }

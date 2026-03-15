@@ -9,6 +9,5 @@ import java.util.List;
 
 public interface ReportService {
     ByteArrayInputStream generateCSVOpportunityReport();
-
-    List<OpportunityDTO> getOppotunitiesData();
+    List<OpportunityDTO> getOpportunitiesData();
 }

@@ -7,7 +7,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.stef.service.ReportService;
@@ -27,27 +26,18 @@ public class ReportController {
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @RolesAllowed({"manager","user"})
+    @RolesAllowed({"manager", "user"})
     public Response generateReport() {
-        try{
-            return Response.ok(reportService.generateCSVOpportunityReport(),MediaType.APPLICATION_OCTET_STREAM)
-                    .header("content-disposition", "attachment; filename=" + new Date() + "_opportunity_report.csv")
-                    .build();
-        }
-        catch(ServerErrorException e){
-            return Response.serverError().build();
-        }
+        return Response.ok(reportService.generateCSVOpportunityReport(), MediaType.APPLICATION_OCTET_STREAM)
+                .header("content-disposition", "attachment; filename=" + new Date() + "_opportunity_report.csv")
+                .build();
     }
 
     @GET
     @Path("/data")
-    @RolesAllowed({"manager","user"})
+    @RolesAllowed({"manager", "user"})
+    @Produces(MediaType.APPLICATION_JSON)
     public Response requestOpportunityData() {
-        try{
-            return Response.ok(reportService.getOppotunitiesData(),MediaType.APPLICATION_JSON).build();
-        }
-        catch(ServerErrorException e){
-            return Response.serverError().build();
-        }
+        return Response.ok(reportService.getOpportunitiesData()).build();
     }
 }
