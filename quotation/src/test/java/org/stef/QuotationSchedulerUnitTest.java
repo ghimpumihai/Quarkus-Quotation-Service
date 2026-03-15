@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-class QuotationSchedulerTest {
+class QuotationSchedulerUnitTest {
 
     @Test
     void scheduleInvokesQuotationService() throws Exception {

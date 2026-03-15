@@ -15,7 +15,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class QuotationKafkaEventsTest {
+class QuotationKafkaEventsUnitTest {
 
     @Test
     void sendNewKafkaEventUsesEmitter() throws Exception {
