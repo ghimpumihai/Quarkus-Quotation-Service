@@ -7,6 +7,8 @@ import jakarta.transaction.Transactional;
 import org.stef.dto.ProposalDTO;
 import org.stef.dto.ProposalDetailsDTO;
 import org.stef.entity.Proposal;
+import org.stef.exception.ProposalCreationException;
+import org.stef.exception.ProposalNotFoundException;
 import org.stef.message.KafkaEvent;
 import org.stef.repository.ProposalRepository;
 import org.jboss.logging.Logger;
@@ -30,6 +32,10 @@ public class ProposalServiceImpl implements ProposalService{
     public ProposalDetailsDTO findFullProposal(Long id) {
         Proposal proposal = proposalRepository.findById(id);
 
+        if (proposal == null) {
+            throw new ProposalNotFoundException(id);
+        }
+
         return ProposalDetailsDTO.builder()
                 .proposalId(proposal.getId())
                 .customer(proposal.getCustomer())
@@ -48,13 +54,12 @@ public class ProposalServiceImpl implements ProposalService{
             kafkaMessages.sendProposalRequest(toDTO(proposal));
         } catch (PersistenceException e) {
             LOG.errorf(e, "Failed to persist proposal for customer %s", proposalDetailsDTO.customer());
-            throw new RuntimeException("Failed to persist proposal: " + e.getMessage());
+            throw new ProposalCreationException("Failed to persist proposal", e);
         } catch (Exception e) {
             LOG.error("Unexpected error creating proposal", e);
-            throw new RuntimeException("Unexpected error creating proposal: " + e.getMessage());
+            throw new ProposalCreationException("Unexpected error creating proposal", e);
         }
     }
-
     private Proposal buildProposal(ProposalDetailsDTO dto) {
         return Proposal.builder()
                 .customer(dto.customer())
