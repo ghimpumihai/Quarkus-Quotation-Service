@@ -16,7 +16,7 @@ jobs:
         env:
           POSTGRES_DB: quotation_db
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES }}
         ports:
           - 5432:5432
         options: >-
@@ -30,7 +30,7 @@ jobs:
         env:
           POSTGRES_DB: proposal_db
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES }}
         ports:
           - 5434:5432
         options: >-
@@ -44,7 +44,7 @@ jobs:
         env:
           POSTGRES_DB: record_db
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES }}
         ports:
           - 5435:5432
         options: >-
@@ -54,7 +54,7 @@ jobs:
           --health-retries 5
 
       kafka:
-        image: bitnami/kafka:latest
+        image: bitnami/kafka:3.7
         env:
           KAFKA_CFG_NODE_ID: 0
           KAFKA_CFG_PROCESS_ROLES: controller,broker
