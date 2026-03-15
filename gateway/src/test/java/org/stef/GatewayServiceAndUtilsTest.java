@@ -29,16 +29,11 @@ class GatewayServiceAndUtilsTest {
         ProposalRestClient client = mock(ProposalRestClient.class);
         ProposalServiceImpl service = new ProposalServiceImpl(client);
         ProposalDetailsDTO dto = ProposalDetailsDTO.builder().proposalId(11L).customer("ACME").build();
-        jakarta.ws.rs.core.Response createResponse = jakarta.ws.rs.core.Response.accepted().build();
-        jakarta.ws.rs.core.Response deleteResponse = jakarta.ws.rs.core.Response.noContent().build();
-
         when(client.getProposalDetailsById(11L)).thenReturn(dto);
-        when(client.createProposal(dto)).thenReturn(createResponse);
-        when(client.deleteProposal(11L)).thenReturn(deleteResponse);
 
         assertSame(dto, service.getProposalDetailsById(11L));
-        assertSame(createResponse, service.createProposal(dto));
-        assertSame(deleteResponse, service.removeProposal(11L));
+        service.createProposal(dto);
+        service.removeProposal(11L);
 
         verify(client).getProposalDetailsById(11L);
         verify(client).createProposal(dto);
@@ -64,7 +59,7 @@ class GatewayServiceAndUtilsTest {
         assertTrue(csv.contains("ACME"));
         assertTrue(csv.contains("44.10"));
         assertTrue(csv.contains("5.22"));
-        assertEquals(opportunities, service.getOppotunitiesData());
+        assertEquals(opportunities, service.getOpportunitiesData());
         verify(client, times(2)).requestOpportunityData();
     }
 

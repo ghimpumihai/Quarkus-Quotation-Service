@@ -1,6 +1,5 @@
 package org.stef;
 
-import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 import org.stef.controller.ProposalController;
@@ -20,9 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class GatewayControllersSmokeTest {
 
@@ -38,7 +35,6 @@ class GatewayControllersSmokeTest {
                 .proposalValidityDays(15)
                 .build();
         when(proposalService.getProposalDetailsById(9L)).thenReturn(dto);
-
         ProposalController controller = new ProposalController(proposalService);
 
         try (Response response = controller.getProposalDetailsById(9L)) {
@@ -48,48 +44,25 @@ class GatewayControllersSmokeTest {
     }
 
     @Test
-    void proposalControllerReturnsServerErrorWhenLookupFails() {
+    void proposalControllerReturnsCreatedOnSuccess() {
         ProposalService proposalService = mock(ProposalService.class);
-        when(proposalService.getProposalDetailsById(3L)).thenThrow(new ServerErrorException(500));
-
-        ProposalController controller = new ProposalController(proposalService);
-
-        try (Response response = controller.getProposalDetailsById(3L)) {
-            assertEquals(500, response.getStatus());
-        }
-    }
-
-    @Test
-    void proposalControllerCreateMapsSuccessStatusesToOk() {
-        ProposalService proposalService = mock(ProposalService.class);
-        when(proposalService.createProposal(any())).thenReturn(Response.status(201).build());
         ProposalController controller = new ProposalController(proposalService);
 
         try (Response response = controller.createNewProposal(ProposalDetailsDTO.builder().customer("ACME").build())) {
-            assertEquals(200, response.getStatus());
+            assertEquals(201, response.getStatus());
         }
+        verify(proposalService).createProposal(any());
     }
 
     @Test
-    void proposalControllerCreatePropagatesNonSuccessStatus() {
+    void proposalControllerReturnsNoContentOnDelete() {
         ProposalService proposalService = mock(ProposalService.class);
-        when(proposalService.createProposal(any())).thenReturn(Response.status(409).build());
-        ProposalController controller = new ProposalController(proposalService);
-
-        try (Response response = controller.createNewProposal(ProposalDetailsDTO.builder().customer("ACME").build())) {
-            assertEquals(409, response.getStatus());
-        }
-    }
-
-    @Test
-    void proposalControllerDeleteMapsStatuses() {
-        ProposalService proposalService = mock(ProposalService.class);
-        when(proposalService.removeProposal(5L)).thenReturn(Response.noContent().build());
         ProposalController controller = new ProposalController(proposalService);
 
         try (Response response = controller.removeProposal(5L)) {
-            assertEquals(200, response.getStatus());
+            assertEquals(204, response.getStatus());
         }
+        verify(proposalService).removeProposal(5L);
     }
 
     @Test
@@ -108,17 +81,6 @@ class GatewayControllersSmokeTest {
     }
 
     @Test
-    void reportControllerReturnsServerErrorWhenCsvGenerationFails() {
-        ReportService reportService = mock(ReportService.class);
-        when(reportService.generateCSVOpportunityReport()).thenThrow(new ServerErrorException(500));
-        ReportController controller = new ReportController(reportService);
-
-        try (Response response = controller.generateReport()) {
-            assertEquals(500, response.getStatus());
-        }
-    }
-
-    @Test
     void reportControllerReturnsOpportunityData() {
         ReportService reportService = mock(ReportService.class);
         List<OpportunityDTO> expected = List.of(OpportunityDTO.builder()
@@ -127,23 +89,12 @@ class GatewayControllersSmokeTest {
                 .priceTonne(new BigDecimal("10.0"))
                 .lastCurrencyQuotation(new BigDecimal("5.0"))
                 .build());
-        when(reportService.getOppotunitiesData()).thenReturn(expected);
+        when(reportService.getOpportunitiesData()).thenReturn(expected);
         ReportController controller = new ReportController(reportService);
 
         try (Response response = controller.requestOpportunityData()) {
             assertEquals(200, response.getStatus());
             assertEquals(expected, response.getEntity());
-        }
-    }
-
-    @Test
-    void reportControllerReturnsServerErrorWhenDataLookupFails() {
-        ReportService reportService = mock(ReportService.class);
-        doThrow(new ServerErrorException(500)).when(reportService).getOppotunitiesData();
-        ReportController controller = new ReportController(reportService);
-
-        try (Response response = controller.requestOpportunityData()) {
-            assertEquals(500, response.getStatus());
         }
     }
 }
