@@ -6,6 +6,8 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stef.exception.InvalidCurrencyCodeException;
+import org.stef.exception.ProviderUnavailableException;
 import org.stef.service.QuotationService;
 
 @ApplicationScoped
@@ -22,8 +24,16 @@ public class QuotationScheduler {
 
     @Transactional
     @Scheduled(every = "60s", identity = "task-job")
-    void schedule(){
+    void schedule() {
         LOG.info("Scheduled task started: Fetching currency price...");
-        quotationService.getCurrencyPrice();
+        try {
+            quotationService.getCurrencyPrice();
+        } catch (ProviderUnavailableException e) {
+            LOG.warn("Quotation fetch failed: {}", e.getMessage());
+        } catch(InvalidCurrencyCodeException e) {
+            LOG.error("Invalid currency code during scheduled fetch: {}", e.getMessage());
+        } catch (Exception e) {
+            LOG.error("Unexpected error during scheduled fetch", e);
+        }
     }
 }
