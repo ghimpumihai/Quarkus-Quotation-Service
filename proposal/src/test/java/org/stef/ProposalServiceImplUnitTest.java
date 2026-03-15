@@ -6,6 +6,8 @@ import org.mockito.ArgumentCaptor;
 import org.stef.dto.ProposalDTO;
 import org.stef.dto.ProposalDetailsDTO;
 import org.stef.entity.Proposal;
+import org.stef.exception.ProposalCreationException;
+import org.stef.exception.ProposalNotFoundException;
 import org.stef.message.KafkaEvent;
 import org.stef.repository.ProposalRepository;
 import org.stef.service.ProposalServiceImpl;
@@ -22,7 +24,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class ProposalServiceImplTest {
+class ProposalServiceImplUnitTest {
 
     @Test
     void findFullProposalMapsEntityToDto() {
@@ -89,9 +91,11 @@ class ProposalServiceImplTest {
         ProposalDetailsDTO dto = ProposalDetailsDTO.builder().customer("Broken").build();
         doThrow(new PersistenceException("db down")).when(repository).persist(any(Proposal.class));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> service.createProposal(dto));
+        ProposalCreationException exception = assertThrows(ProposalCreationException.class,
+                () -> service.createProposal(dto));
 
         assertTrue(exception.getMessage().contains("Failed to persist proposal"));
+        assertEquals(500, exception.getStatusCode());
         verify(kafkaEvent, never()).sendProposalRequest(any());
     }
 
@@ -103,9 +107,25 @@ class ProposalServiceImplTest {
         ProposalDetailsDTO dto = ProposalDetailsDTO.builder().customer("Broken").build();
         doThrow(new IllegalStateException("boom")).when(repository).persist(any(Proposal.class));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> service.createProposal(dto));
+        ProposalCreationException exception = assertThrows(ProposalCreationException.class,
+                () -> service.createProposal(dto));
 
         assertTrue(exception.getMessage().contains("Unexpected error creating proposal"));
+        assertEquals(500, exception.getStatusCode());
+    }
+
+    @Test
+    void findFullProposalThrowsNotFoundWhenProposalDoesNotExist() {
+        ProposalRepository repository = mock(ProposalRepository.class);
+        KafkaEvent kafkaEvent = mock(KafkaEvent.class);
+        ProposalServiceImpl service = new ProposalServiceImpl(repository, kafkaEvent);
+        when(repository.findById(99L)).thenReturn(null);
+
+        ProposalNotFoundException exception = assertThrows(ProposalNotFoundException.class,
+                () -> service.findFullProposal(99L));
+
+        assertEquals("Proposal not found with id: 99", exception.getMessage());
+        assertEquals(404, exception.getStatusCode());
     }
 
     @Test
