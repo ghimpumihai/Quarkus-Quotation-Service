@@ -58,10 +58,8 @@ public class OpportunityServiceImpl implements OpportunityService {
 
             opportunityRepository.persist(opportunity);
         } catch (PersistenceException e) {
-            LOG.error("Failed to persist opportunity for proposal: {}", proposalDTO.proposalId(), e);
             throw new QuotationPersistenceException("Failed to persist opportunity", 500, e);
         } catch (Exception e) {
-            LOG.error("Unexpected error building opportunity for proposal: {}", proposalDTO.proposalId(), e);
             throw new QuotationPersistenceException("Unexpected error building opportunity", 500, e);
         }
     }
@@ -76,10 +74,8 @@ public class OpportunityServiceImpl implements OpportunityService {
 
             quotationRepository.persist(quotation);
         } catch (PersistenceException e) {
-            LOG.error("Failed to persist quotation with price: {}", quotationDTO.currencyPrice(), e);
             throw new QuotationPersistenceException("Failed to persist quotation", 500, e);
         } catch (Exception e) {
-            LOG.error("Unexpected error saving quotation with price: {}", quotationDTO.currencyPrice(), e);
             throw new QuotationPersistenceException("Unexpected error saving quotation", 500, e);
         }
     }
@@ -114,7 +110,6 @@ public class OpportunityServiceImpl implements OpportunityService {
                     .filter(Objects::nonNull)
                     .toList();
         } catch (Exception e) {
-            LOG.error("Failed to generate opportunity report", e);
             throw new ReportGenerationException("Failed to generate opportunity report", e);
         }
     }
