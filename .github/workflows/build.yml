@@ -14,7 +14,7 @@ jobs:
       quotation_db:
         image: postgres:15
         env:
-          POSTGRES_DB: quotation_db
+          POSTGRES_DB: quotation
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES }}
         ports:
@@ -28,7 +28,7 @@ jobs:
       proposal_db:
         image: postgres:15
         env:
-          POSTGRES_DB: proposal_db
+          POSTGRES_DB: proposal
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES }}
         ports:
@@ -42,7 +42,7 @@ jobs:
       record_db:
         image: postgres:15
         env:
-          POSTGRES_DB: record_db
+          POSTGRES_DB: report
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES }}
         ports:
@@ -75,6 +75,7 @@ jobs:
           --health-interval 15s
           --health-timeout 10s
           --health-retries 15
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -99,4 +100,5 @@ jobs:
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          QUARKUS_DATASOURCE_PASSWORD: ${{ secrets.POSTGRES }}
         run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=ghimpumihai_Quarkus-Quotation-Service
