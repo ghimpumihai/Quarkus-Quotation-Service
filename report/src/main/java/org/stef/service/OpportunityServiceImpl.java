@@ -20,6 +20,7 @@ import org.stef.repository.QuotationRepository;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @ApplicationScoped
 public class OpportunityServiceImpl implements OpportunityService {
@@ -57,10 +58,8 @@ public class OpportunityServiceImpl implements OpportunityService {
 
             opportunityRepository.persist(opportunity);
         } catch (PersistenceException e) {
-            LOG.error("Failed to persist opportunity for proposal: {}", proposalDTO.proposalId(), e);
             throw new QuotationPersistenceException("Failed to persist opportunity", 500, e);
         } catch (Exception e) {
-            LOG.error("Unexpected error building opportunity for proposal: {}", proposalDTO.proposalId(), e);
             throw new QuotationPersistenceException("Unexpected error building opportunity", 500, e);
         }
     }
@@ -75,28 +74,42 @@ public class OpportunityServiceImpl implements OpportunityService {
 
             quotationRepository.persist(quotation);
         } catch (PersistenceException e) {
-            LOG.error("Failed to persist quotation with price: {}", quotationDTO.currencyPrice(), e);
             throw new QuotationPersistenceException("Failed to persist quotation", 500, e);
         } catch (Exception e) {
-            LOG.error("Unexpected error saving quotation with price: {}", quotationDTO.currencyPrice(), e);
             throw new QuotationPersistenceException("Unexpected error saving quotation", 500, e);
         }
     }
-
 
     public List<OpportunityDTO> generateOpportunityReport() {
         try {
             return opportunityRepository.findAll()
                     .stream()
-                    .map(item -> OpportunityDTO.builder()
-                            .proposalId(item.getProposalId())
-                            .customer(item.getCustomer())
-                            .priceTonne(item.getPriceTonne())
-                            .lastCurrencyQuotation(item.getLastCurrencyQuotation())
-                            .build())
+                    .filter(item -> {
+                        if (item == null) {
+                            LOG.warn("Skipping null opportunity entity");
+                            return false;
+                        }
+                        return true;
+                    })
+                    .map(item -> {
+                        try {
+                            return OpportunityDTO.builder()
+                                    .proposalId(item.getProposalId())
+                                    .customer(item.getCustomer())
+                                    .priceTonne(item.getPriceTonne())
+                                    .lastCurrencyQuotation(item.getLastCurrencyQuotation() != null
+                                            ? item.getLastCurrencyQuotation()
+                                            : BigDecimal.ZERO)
+                                    .build();
+                        } catch (Exception e) {
+                            LOG.warn("Skipping opportunity due to mapping error for proposalId: {}, cause: {}",
+                                    item.getProposalId(), e.getMessage());
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
                     .toList();
         } catch (Exception e) {
-            LOG.error("Failed to generate opportunity report", e);
             throw new ReportGenerationException("Failed to generate opportunity report", e);
         }
     }

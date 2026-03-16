@@ -9,24 +9,25 @@ import org.stef.dto.ProposalDTO;
 import org.stef.dto.QuotationDTO;
 import org.stef.entity.Opportunity;
 import org.stef.entity.Quotation;
+import org.stef.exception.QuotationPersistenceException;
+import org.stef.exception.ReportGenerationException;
 import org.stef.repository.OpportunitiesRepository;
 import org.stef.repository.QuotationRepository;
 import org.stef.service.OpportunityServiceImpl;
-import org.stef.exception.QuotationPersistenceException;
-import org.stef.exception.ReportGenerationException;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 
 class OpportunityServiceImplTest {
 
@@ -135,9 +136,10 @@ class OpportunityServiceImplTest {
         when(quotationRepository.findAll()).thenReturn(quotationQuery);
         when(quotationQuery.list()).thenReturn(List.of());
         doThrow(new PersistenceException("db down")).when(opportunitiesRepository).persist(any(Opportunity.class));
+        ProposalDTO dto = ProposalDTO.builder().proposalId(1L).customer("ACME").build();
 
         QuotationPersistenceException ex = assertThrows(QuotationPersistenceException.class,
-                () -> service.buildOpportunity(ProposalDTO.builder().proposalId(1L).customer("ACME").build()));
+                () -> service.buildOpportunity(dto));
 
         assertEquals("Failed to persist opportunity", ex.getMessage());
         assertEquals(500, ex.getStatusCode());
@@ -153,9 +155,10 @@ class OpportunityServiceImplTest {
         when(quotationRepository.findAll()).thenReturn(quotationQuery);
         when(quotationQuery.list()).thenReturn(List.of());
         doThrow(new RuntimeException("unexpected")).when(opportunitiesRepository).persist(any(Opportunity.class));
+        ProposalDTO dto = ProposalDTO.builder().proposalId(1L).customer("ACME").build();
 
         QuotationPersistenceException ex = assertThrows(QuotationPersistenceException.class,
-                () -> service.buildOpportunity(ProposalDTO.builder().proposalId(1L).customer("ACME").build()));
+                () -> service.buildOpportunity(dto));
 
         assertEquals("Unexpected error building opportunity", ex.getMessage());
         assertEquals(500, ex.getStatusCode());
@@ -167,9 +170,10 @@ class OpportunityServiceImplTest {
         OpportunitiesRepository opportunitiesRepository = mock(OpportunitiesRepository.class);
         OpportunityServiceImpl service = new OpportunityServiceImpl(quotationRepository, opportunitiesRepository);
         doThrow(new PersistenceException("db down")).when(quotationRepository).persist(any(Quotation.class));
+        QuotationDTO dto = new QuotationDTO(null, new BigDecimal("5.55"));
 
         QuotationPersistenceException ex = assertThrows(QuotationPersistenceException.class,
-                () -> service.saveQuotation(new QuotationDTO(null, new BigDecimal("5.55"))));
+                () -> service.saveQuotation(dto));
 
         assertEquals("Failed to persist quotation", ex.getMessage());
         assertEquals(500, ex.getStatusCode());
@@ -181,9 +185,10 @@ class OpportunityServiceImplTest {
         OpportunitiesRepository opportunitiesRepository = mock(OpportunitiesRepository.class);
         OpportunityServiceImpl service = new OpportunityServiceImpl(quotationRepository, opportunitiesRepository);
         doThrow(new RuntimeException("unexpected")).when(quotationRepository).persist(any(Quotation.class));
+        QuotationDTO dto = new QuotationDTO(null, new BigDecimal("5.55"));
 
         QuotationPersistenceException ex = assertThrows(QuotationPersistenceException.class,
-                () -> service.saveQuotation(new QuotationDTO(null, new BigDecimal("5.55"))));
+                () -> service.saveQuotation(dto));
 
         assertEquals("Unexpected error saving quotation", ex.getMessage());
         assertEquals(500, ex.getStatusCode());
@@ -210,13 +215,16 @@ class OpportunityServiceImplTest {
         OpportunityServiceImpl service = new OpportunityServiceImpl(quotationRepository, opportunitiesRepository);
         @SuppressWarnings("unchecked")
         PanacheQuery<Opportunity> opportunityQuery = mock(PanacheQuery.class);
-        Opportunity valid = new Opportunity();
-        valid.setProposalId(1L);
-        valid.setCustomer("ACME");
-        valid.setPriceTonne(new BigDecimal("20.00"));
-        valid.setLastCurrencyQuotation(new BigDecimal("5.00"));
+        Opportunity valid = mock(Opportunity.class);
+        when(valid.getProposalId()).thenReturn(1L);
+        when(valid.getCustomer()).thenReturn("ACME");
+        when(valid.getPriceTonne()).thenReturn(new BigDecimal("20.00"));
+        when(valid.getLastCurrencyQuotation()).thenReturn(new BigDecimal("5.00"));
+        List<Opportunity> withNull = new ArrayList<>();
+        withNull.add(null);
+        withNull.add(valid);
         when(opportunitiesRepository.findAll()).thenReturn(opportunityQuery);
-        when(opportunityQuery.stream()).thenReturn(Stream.of(null, valid));
+        when(opportunityQuery.stream()).thenReturn(withNull.stream());
 
         List<OpportunityDTO> result = service.generateOpportunityReport();
 
@@ -231,11 +239,11 @@ class OpportunityServiceImplTest {
         OpportunityServiceImpl service = new OpportunityServiceImpl(quotationRepository, opportunitiesRepository);
         @SuppressWarnings("unchecked")
         PanacheQuery<Opportunity> opportunityQuery = mock(PanacheQuery.class);
-        Opportunity opportunity = new Opportunity();
-        opportunity.setProposalId(1L);
-        opportunity.setCustomer("ACME");
-        opportunity.setPriceTonne(new BigDecimal("20.00"));
-        opportunity.setLastCurrencyQuotation(null);
+        Opportunity opportunity = mock(Opportunity.class);
+        when(opportunity.getProposalId()).thenReturn(1L);
+        when(opportunity.getCustomer()).thenReturn("ACME");
+        when(opportunity.getPriceTonne()).thenReturn(new BigDecimal("20.00"));
+        when(opportunity.getLastCurrencyQuotation()).thenReturn(null);
         when(opportunitiesRepository.findAll()).thenReturn(opportunityQuery);
         when(opportunityQuery.stream()).thenReturn(Stream.of(opportunity));
 
